@@ -49,16 +49,16 @@ tasks you see fit.
 
 To give you a taste, you can define tasks like so:
 
-      def_task(:docker_build_image) do |project_id, evaluator|
+      def_task(:docker_build_image) do |project_id|
         project_path = convert_project_id_to_path(project_id)
         image = Docker::Image.build_from_dir(project_path, { 'dockerfile' => "Dockerfile" })
-        evaluator.call(succeed(image.id))
+        succeed(image.id)
       end
     
-      def_task(:docker_tag_image) do |project_id, docker_image_id, evaluator|
+      def_task(:docker_tag_image) do |project_id, docker_image_id|
         image = Docker::Image.get(docker_image_id)
         image.tag("repo" => "iamwil/helmspointapp-#{project_id}", "tag" => "latest")
-        evaluator.call(succeed(docker_image_id))
+        succeed(docker_image_id)
       end
 
 And chain multiple tasks together, with map and and_then semantics, which the chained tasks is itself a task:

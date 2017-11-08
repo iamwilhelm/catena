@@ -69,13 +69,14 @@ module Catena
       # FIXME shouldn't need to know explicitly the tasks are on Deployment class
 
       callback = find_callback(efx["callback_name"])
-      args = efx["callback_args"] + [evaluator(stack)]
+      args = efx["callback_args"]
       logger.debug "  Calling '#{efx["callback_name"]}' with args: #{args.inspect}"
 
       # FIXME check the arity and note if we're short?
       # if we're at the end, and we're short on arguments, it'll happyly execute,
       # return a lambda, and silently finish
-      callback.call(*args)
+      result_efx = callback.call(*args)
+      evaluator(stack, result_efx)
 
       return steps + 1
     end
@@ -135,22 +136,20 @@ module Catena
     # same as calling the func that returns bind in Task
     # TODO should use that so don't have to include Interpreter?
     #      But then still have to solve the problem of knowing about Deployment in step_binding
-    # TODO maybe just destructively update binding_callbcak with new value in args?
+    # TODO maybe just destructively update binding_callback with new value in args?
     def chain(callback_node, value_or_error)
       func_name = Lang.callback_to_func_name(callback_node["callback_name"])
       args = callback_node["callback_args"] + [value_or_error]
       return bind(func_name, *args)
     end
 
-    def evaluator(stack)
-      lambda { |result_efx|
-        # FIXME need to check if result_efx is nil and then throw
-        # - Do you have a trailing "|"?
-        # FIXME need to check if result_efx is actually an efx
-        logger.info "Enqueuing result for evaluation"
-        logger.debug "  result: #{result_efx}"
-        enqueue(result_efx, stack)
-      }
+    def evaluator(stack, result_efx)
+      # FIXME need to check if result_efx is nil and then throw
+      # - Do you have a trailing "|"?
+      # FIXME need to check if result_efx is actually an efx
+      logger.info "Enqueuing result for evaluation"
+      logger.debug "  result: #{result_efx}"
+      enqueue(result_efx, stack)
     end
 
   end

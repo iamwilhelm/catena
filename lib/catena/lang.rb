@@ -17,6 +17,8 @@ module Catena
             bind(__method__, *args)
           end
 
+          # TODO what happens when block calls return? Should we catch
+          # LocalJumpError and advise user to use 'next'?
           callback_name = Lang.func_name_to_callback(task_name)
           define_method(callback_name, &block)
         end
@@ -62,6 +64,7 @@ module Catena
         "cancel" => nil,
       }
     end
+    alias :fn :bind
 
     auto_curry def and_then(bind_efx, efx_a)
       binding_callback = bind_efx.is_a?(Symbol) ? bind(bind_efx) : bind_efx
@@ -98,20 +101,16 @@ module Catena
     end
 
     # This only works because we're filling in all other args except val_a
-    auto_curry def __map2_a(bind_efx, efx_b, val_a, evaluator)
-      new_efx = pass(efx_b) >=
+    auto_curry def __map2_a(bind_efx, efx_b, val_a)
+      pass(efx_b) >=
         and_then(bind(:map2_b, bind_efx, val_a))
-
-      evaluator.call(new_efx)
     end
 
-    auto_curry def __map2_b(bind_efx, val_a, val_b, evaluator)
+    auto_curry def __map2_b(bind_efx, val_a, val_b)
       # update binding to have val_a and val_b as arguments
       func_name = Lang.callback_to_func_name(bind_efx["callback_name"])
       args = bind_efx["callback_args"] + [val_a, val_b]
-      new_efx = bind(func_name, *args)
-
-      evaluator.call(new_efx)
+      bind(func_name, *args)
     end
 
     auto_curry def smap(bind_efx, efxs)
